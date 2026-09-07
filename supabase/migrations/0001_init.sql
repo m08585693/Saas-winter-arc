@@ -1,10 +1,11 @@
 -- ============================================================
--- Arc — Platforme de groupes de motivation
--- Migration 0001 : schéma de base + auth
--- À coller dans Supabase Dashboard > SQL Editor
+-- Arc - Plateforme de groupes de motivation
+-- Migration 0001 : schema de base + auth
+-- A coller dans Supabase Dashboard > SQL Editor
+-- (version ASCII-safe : aucun caractere special)
 -- ============================================================
 
--- ---------- Profil utilisateur (lié à auth.users) ----------
+-- ---------- Profil utilisateur (lie a auth.users) ----------
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
@@ -24,7 +25,7 @@ create table if not exists public.groups (
   created_by uuid references auth.users(id) on delete set null
 );
 
--- ---------- Adhésions (memberships) ----------
+-- ---------- Adhesions (memberships) ----------
 create table if not exists public.memberships (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -53,12 +54,12 @@ create table if not exists public.badges (
 );
 
 insert into public.badges (name, days_required, icon) values
-  ('7 jours', 7, '🔥'),
-  ('30 jours', 30, '⚡'),
-  ('90 jours', 90, '🏆')
+  ('7 jours', 7, 'flamme'),
+  ('30 jours', 30, 'eclair'),
+  ('90 jours', 90, 'coupe')
 on conflict do nothing;
 
--- ---------- Badges débloqués par utilisateur ----------
+-- ---------- Badges debloques par utilisateur ----------
 create table if not exists public.user_badges (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -69,8 +70,8 @@ create table if not exists public.user_badges (
 
 -- ============================================================
 -- Fonction de calcul du streak courant d'un membre dans un groupe
--- (série de jours consécutifs de check-in se terminant aujourd'hui
---  ou hier, sinon le streak est réinitialisé / nul)
+-- (serie de jours consecutifs de check-in se terminant aujourd'hui
+--  ou hier, sinon le streak est reinitialise / nul)
 -- ============================================================
 create or replace function public.get_current_streak(
   p_user_id uuid,
@@ -80,7 +81,7 @@ declare
   streak int := 0;
   cursor_date date := (now() at time zone 'utc')::date;
 begin
-  -- Si pas de check-in aujourd'hui, on regarde si celui d'hier est présent
+  -- Si pas de check-in aujourd'hui, on regarde si celui d'hier est present
   if not exists (
     select 1 from public.checkins
     where user_id = p_user_id and group_id = p_group_id and check_date = cursor_date
@@ -88,7 +89,7 @@ begin
     cursor_date := cursor_date - 1;
   end if;
 
-  -- Compte les jours consécutifs en remontant dans le passé
+  -- Compte les jours consecutifs en remontant dans le passe
   while exists (
     select 1 from public.checkins
     where user_id = p_user_id and group_id = p_group_id and check_date = cursor_date
@@ -122,12 +123,12 @@ alter table public.checkins enable row level security;
 alter table public.badges enable row level security;
 alter table public.user_badges enable row level security;
 
--- Profils : chacun lit les profils, chacun édite le sien
+-- Profils : chacun lit les profils, chacun edite le sien
 create policy "profiles_select" on public.profiles for select using (true);
 create policy "profiles_insert" on public.profiles for insert with check (auth.uid() = id);
 create policy "profiles_update" on public.profiles for update using (auth.uid() = id);
 
--- Groupes : publics lisibles par tous (les privés uniquement par membres)
+-- Groupes : publics lisibles par tous (les prives uniquement par membres)
 create policy "groups_select" on public.groups for select using (
   not is_private
   or exists (
@@ -138,7 +139,7 @@ create policy "groups_select" on public.groups for select using (
 create policy "groups_insert" on public.groups for insert
   with check (auth.uid() = created_by);
 
--- Adhésions : l'utilisateur gère les siennes, lecture par les membres du groupe
+-- Adhesions : l'utilisateur gere les siennes, lecture par les membres du groupe
 create policy "memberships_select" on public.memberships for select using (
   user_id = auth.uid()
   or exists (
@@ -151,7 +152,7 @@ create policy "memberships_insert" on public.memberships for insert
 create policy "memberships_delete" on public.memberships for delete
   using (user_id = auth.uid());
 
--- Check-ins : chacun ne crée/lit que les siens (les membres voient les autres via query)
+-- Check-ins : chacun ne cree/lit que les siens (les membres voient les autres via query)
 create policy "checkins_select" on public.checkins for select using (
   user_id = auth.uid()
   or exists (
@@ -173,13 +174,17 @@ create policy "user_badges_insert" on public.user_badges for insert
   with check (user_id = auth.uid());
 
 -- ============================================================
--- Trigger : création automatique du profil à l'inscription
+-- Trigger : creation automatique du profil a l'inscription
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into public.profiles (id, email, display_name)
-  values (new.id, coalesce(new.email, ''), coalesce(new.raw_user_meta_data ->> 'display_name', split_part(coalesce(new.email, ''), '@', 1)))
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    coalesce(new.raw_user_meta_data ->> 'display_name', split_part(coalesce(new.email, ''), '@', 1))
+  )
   on conflict (id) do nothing;
   return new;
 end;
@@ -194,14 +199,14 @@ create trigger on_auth_user_created
 -- Seed : groupes publics de lancement
 -- ============================================================
 insert into public.groups (name, slug, description, is_private) values
-  ('Winter arc musculation', 'winter-arc-muscu', 'S''entraîner 5x par semaine pendant tout l''hiver', false),
-  ('Réveil à 6h', 'reveil-6h', 'Se lever à 6h tous les matins', false),
-  ('Arrêt écrans', 'arret-ecrans', 'Limiter le temps d''écran à 1h/jour hors travail', false),
+  ('Winter arc musculation', 'winter-arc-muscu', 'S entrainer 5x par semaine pendant tout l hiver', false),
+  ('Reveil a 6h', 'reveil-6h', 'Se lever a 6h tous les matins', false),
+  ('Arret ecrans', 'arret-ecrans', 'Limiter le temps d ecran a 1h/jour hors travail', false),
   ('Lecture quotidienne', 'lecture-quotidienne', 'Lire 20 pages par jour', false),
-  ('Méditation matinale', 'meditation-matin', '20 min de méditation au réveil', false),
-  ('Eau & hydratation', 'eau-hydratation', 'Boire 2L d''eau par jour', false),
-  ('Course à pied', 'course-a-pied', 'Courir 3x par semaine', false),
-  ('Sommeil régulier', 'sommeil-regulier', 'Couché avant 23h, 8h de sommeil', false),
-  ('Écriture quotidienne', 'ecriture-quotidienne', 'Écrire 500 mots par jour', false),
-  ('No sucre', 'no-sucre', 'Supprimer le sucre ajouté', false)
+  ('Meditation matinale', 'meditation-matin', '20 min de meditation au reveil', false),
+  ('Eau & hydratation', 'eau-hydratation', 'Boire 2L d eau par jour', false),
+  ('Course a pied', 'course-a-pied', 'Courir 3x par semaine', false),
+  ('Sommeil regulier', 'sommeil-regulier', 'Couche avant 23h, 8h de sommeil', false),
+  ('Ecriture quotidienne', 'ecriture-quotidienne', 'Ecrire 500 mots par jour', false),
+  ('No sucre', 'no-sucre', 'Supprimer le sucre ajoute', false)
 on conflict (slug) do nothing;
