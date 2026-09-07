@@ -11,6 +11,9 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/groupes";
+  const errorParam = searchParams.get("error");
+
+  const displayError = error ?? (errorParam ? decodeURIComponent(errorParam) : null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,8 +86,8 @@ function LoginForm() {
               className="mt-1.5 w-full h-11 rounded-xl bg-surface border border-border px-4 text-sm outline-none focus:border-accent transition-colors"
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
+          {displayError && (
+            <p className="text-sm text-red-400">{displayError}</p>
           )}
           <button
             type="submit"

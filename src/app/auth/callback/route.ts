@@ -5,6 +5,14 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/groupes";
+  const linkError = searchParams.get("error");
+
+  const errorPath = (message: string) =>
+    `${origin}/login?error=${encodeURIComponent(message)}`;
+
+  if (linkError) {
+    return NextResponse.redirect(errorPath("Lien invalide ou expiré. Demande un nouveau lien."));
+  }
 
   if (code) {
     const supabase = await createClient();
@@ -21,11 +29,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}${next}`);
       }
     }
-  } else {
-    // Pas de code → lien magique invalide/expiré
-    return NextResponse.redirect(`${origin}/login?error=invalid link`);
+    return NextResponse.redirect(errorPath(`Échec de la connexion : ${error.message}`));
   }
 
-  // Erreur pendant l'échange de session
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  return NextResponse.redirect(errorPath("Lien invalide. Demande un nouveau lien."));
 }
