@@ -83,9 +83,6 @@ export default async function GroupPage({
   const myStreak = members.find((m) => m.user_id === user.id)?.streak ?? 0;
   const checkedToday = members.find((m) => m.user_id === user.id)?.checked_today ?? false;
 
-  const sorted = [...members].sort((a, b) => b.streak - a.streak);
-  const myRank = sorted.findIndex((m) => m.user_id === user.id) + 1;
-
   return (
     <GroupPageClient
       group={group}
@@ -94,7 +91,6 @@ export default async function GroupPage({
       members={members}
       myStreak={myStreak}
       checkedTodayToday={checkedToday}
-      myRank={myRank}
     />
   );
 }
