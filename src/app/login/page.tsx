@@ -21,7 +21,7 @@ function LoginForm() {
       email,
       options: {
         emailRedirectTo:
-          process.env.NEXT_PUBLIC_APP_URL + "/auth/callback?next=" + next,
+          window.location.origin + "/auth/callback?next=" + encodeURIComponent(next),
       },
     });
     setLoading(false);
