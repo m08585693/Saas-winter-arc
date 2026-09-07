@@ -36,6 +36,13 @@ yarn-error.log*
 
 # vercel
 .vercel
+vercel-env*
+
+# logs developpement
+dev-server.log
+
+# ia
+CLAUDE.md
 
 # typescript
 *.tsbuildinfo
