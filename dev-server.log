@@ -1,0 +1,17 @@
+
+> saas@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.20:3000
+- Environments: .env.local
+✓ Ready in 1064ms
+✓ Running next.config.ts took 84ms
+
+✓ Generated AGENTS.md and CLAUDE.md for AI agents. Set `agentRules: false` in next.config to disable.
+○ Compiling / ...
+ GET / 200 in 6.5s (next.js: 5.0s, proxy.ts: 571ms, application-code: 914ms)
+ GET /** 404 in 1033ms (next.js: 890ms, proxy.ts: 27ms, application-code: 117ms)
+ GET / 200 in 380ms (next.js: 24ms, proxy.ts: 25ms, application-code: 331ms)
+ GET / 200 in 131ms (next.js: 12ms, proxy.ts: 13ms, application-code: 107ms)
