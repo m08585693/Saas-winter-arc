@@ -114,6 +114,18 @@ language sql stable as $$
 $$;
 
 -- ============================================================
+-- Fonction : l'utilisateur p_user_id est-il membre du groupe ?
+-- (SECURITY DEFINER pour eviter la recursion RLS)
+-- ============================================================
+create or replace function public.is_group_member(p_user_id uuid, p_group_id uuid)
+returns boolean language sql security definer set search_path = public stable as $$
+  select exists (
+    select 1 from public.memberships
+    where user_id = p_user_id and group_id = p_group_id
+  );
+$$;
+
+-- ============================================================
 -- RLS (Row Level Security)
 -- ============================================================
 alter table public.profiles enable row level security;
@@ -131,10 +143,7 @@ create policy "profiles_update" on public.profiles for update using (auth.uid() 
 -- Groupes : publics lisibles par tous (les prives uniquement par membres)
 create policy "groups_select" on public.groups for select using (
   not is_private
-  or exists (
-    select 1 from public.memberships
-    where user_id = auth.uid() and group_id = groups.id
-  )
+  or public.is_group_member(auth.uid(), id)
 );
 create policy "groups_insert" on public.groups for insert
   with check (auth.uid() = created_by);
@@ -142,10 +151,7 @@ create policy "groups_insert" on public.groups for insert
 -- Adhesions : l'utilisateur gere les siennes, lecture par les membres du groupe
 create policy "memberships_select" on public.memberships for select using (
   user_id = auth.uid()
-  or exists (
-    select 1 from public.memberships as m
-    where m.group_id = memberships.group_id and m.user_id = auth.uid()
-  )
+  or public.is_group_member(auth.uid(), group_id)
 );
 create policy "memberships_insert" on public.memberships for insert
   with check (user_id = auth.uid());
@@ -155,10 +161,7 @@ create policy "memberships_delete" on public.memberships for delete
 -- Check-ins : chacun ne cree/lit que les siens (les membres voient les autres via query)
 create policy "checkins_select" on public.checkins for select using (
   user_id = auth.uid()
-  or exists (
-    select 1 from public.memberships as m
-    where m.group_id = checkins.group_id and m.user_id = auth.uid()
-  )
+  or public.is_group_member(auth.uid(), group_id)
 );
 create policy "checkins_insert" on public.checkins for insert
   with check (user_id = auth.uid());
